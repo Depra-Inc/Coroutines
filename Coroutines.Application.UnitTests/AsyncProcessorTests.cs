@@ -2,18 +2,86 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Collections;
+using FluentAssertions;
+using NSubstitute;
 
 namespace Depra.Coroutines.Application.UnitTests;
 
 [TestFixture(TestOf = typeof(AsyncProcessor))]
-public class AsyncProcessorTests
+internal sealed class AsyncProcessorTests
 {
-    private AsyncProcessor _asyncHandler = null!;
+    private AsyncProcessor _asyncProcessor = null!;
 
     [SetUp]
-    public void Setup()
+    public void Setup() => 
+	    _asyncProcessor = new AsyncProcessor();
+
+    [Test]
+    public void WhenCreated_ThenNotRunning()
     {
-        _asyncHandler = new AsyncProcessor();
+	    // Act.
+	    var isRunning = _asyncProcessor.IsRunning;
+
+	    // Assert.
+	    isRunning.Should().BeFalse();
+    }
+    
+    [Test]
+    public void WhenProcessCoroutine_ThenIsRunning()
+    {
+	    // Arrange.
+	    var process = Substitute.For<IEnumerator>();
+
+	    // Act.
+	    _asyncProcessor.Process(process);
+	    var isRunning = _asyncProcessor.IsRunning;
+
+	    // Assert.
+	    isRunning.Should().BeTrue();
+    }
+    
+    [Test]
+    public void WhenTick_AndCoroutinesRunning_ThenAdvancesAllFrames()
+    {
+	    // Arrange.
+	    var coroutine = TestCoroutine();
+	    var isProcessed = false;
+
+	    IEnumerator TestCoroutine()
+	    {
+		    yield return null;
+		    isProcessed = true;
+	    }
+
+	    // Act.
+	    _asyncProcessor.Process(coroutine);
+	    _asyncProcessor.Tick();
+
+	    // Assert.
+	    isProcessed.Should().BeTrue();
+    }
+
+    [Test]
+    public void Tick_RemovesFinishedCoroutines()
+    {
+	    // Arrange
+	    var processor = new AsyncProcessor();
+	    var coroutine = TestCoroutine();
+	    IEnumerator TestCoroutine()
+	    {
+		    yield return null;
+	    }
+
+	    // Act
+	    processor.Process(coroutine);
+	    processor.Tick();
+	    var isRunningBefore = processor.IsRunning;
+	    processor.Tick();
+	    var isRunningAfter = processor.IsRunning;
+
+	    // Assert
+	    Assert.IsTrue(isRunningBefore);
+	    Assert.IsFalse(isRunningAfter);
     }
 
     [Test]
@@ -21,7 +89,7 @@ public class AsyncProcessorTests
     {
         // Arrange.
         const int DURATION = 1;
-        var asyncProcessor = _asyncHandler;
+        var asyncProcessor = _asyncProcessor;
         var startTime = DateTime.Now.Second;
 
         // Act.
@@ -37,7 +105,7 @@ public class AsyncProcessorTests
     {
         // Arrange.
         const int DURATION = 1;
-        var asyncProcessor = _asyncHandler;
+        var asyncProcessor = _asyncProcessor;
         var startTime = DateTime.Now.Second;
 
         // Act.
@@ -56,7 +124,7 @@ public class AsyncProcessorTests
     {
         // Arrange.
         const int DURATION = 1;
-        var asyncProcessor = _asyncHandler;
+        var asyncProcessor = _asyncProcessor;
         var startTime = DateTime.Now.Second;
 
         // Act.
@@ -75,9 +143,9 @@ public class AsyncProcessorTests
 
     private void RunProcessesToEnd()
     {
-        while (_asyncHandler.IsRunning)
+        while (_asyncProcessor.IsRunning)
         {
-            _asyncHandler.Tick();
+            _asyncProcessor.Tick();
             Thread.Sleep(10);
         }
     }
