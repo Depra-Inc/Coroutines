@@ -16,7 +16,7 @@ namespace Depra.Coroutines.Application
         // (it's nice sometimes to work with untyped coroutines so you can yield other coroutines)
         public static IEnumerator<T> Wrap<T>(IEnumerator runner)
         {
-            var coroutine = new Coroutine(runner);
+            var coroutine = new CoroutinePump(runner);
 
             while (coroutine.Pump())
             {
@@ -50,7 +50,7 @@ namespace Depra.Coroutines.Application
         /// </summary>
         public static void SyncWait(IEnumerator runner)
         {
-            var coroutine = new Coroutine(runner);
+            var coroutine = new CoroutinePump(runner);
 
             while (coroutine.Pump()) { }
         }
@@ -61,7 +61,7 @@ namespace Depra.Coroutines.Application
         public static void SyncWaitWithTimeout(IEnumerator runner, float timeout)
         {
             var startTime = DateTime.UtcNow;
-            var coroutine = new Coroutine(runner);
+            var coroutine = new CoroutinePump(runner);
 
             while (coroutine.Pump())
             {
@@ -74,7 +74,7 @@ namespace Depra.Coroutines.Application
 
         public static T SyncWaitGet<T>(IEnumerator<T> runner)
         {
-            var coroutine = new Coroutine(runner);
+            var coroutine = new CoroutinePump(runner);
 
             while (coroutine.Pump()) { }
 
@@ -83,7 +83,7 @@ namespace Depra.Coroutines.Application
 
         public static T SyncWaitGet<T>(IEnumerator runner)
         {
-            var coroutine = new Coroutine(runner);
+            var coroutine = new CoroutinePump(runner);
 
             while (coroutine.Pump()) { }
 
@@ -95,7 +95,7 @@ namespace Depra.Coroutines.Application
         /// </summary>
         public static IEnumerator MakeParallelGroup(IEnumerable<IEnumerator> runners)
         {
-            var runnerList = runners.Select(x => new Coroutine(x)).ToList();
+            var runnerList = runners.Select(x => new CoroutinePump(x)).ToList();
 
             while (runnerList.Any())
             {

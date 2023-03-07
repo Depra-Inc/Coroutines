@@ -5,7 +5,7 @@ using System;
 
 namespace Depra.Coroutines.Domain.Exceptions
 {
-    public class AssertException : Exception
+    public sealed class AssertException : Exception
     {
         public AssertException(string message) : base(message) { }
     }

@@ -5,5 +5,5 @@ using System;
 
 namespace Depra.Coroutines.Domain.Exceptions
 {
-    public class TimeoutException : Exception { }
+    public sealed class TimeoutException : Exception { }
 }

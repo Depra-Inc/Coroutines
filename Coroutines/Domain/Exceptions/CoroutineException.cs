@@ -7,7 +7,7 @@ using System.Text;
 
 namespace Depra.Coroutines.Domain.Exceptions
 {
-    public class CoroutineException : Exception
+    public sealed class CoroutineException : Exception
     {
         private readonly List<Type> _objTrace;
 

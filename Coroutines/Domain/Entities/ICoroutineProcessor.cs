@@ -3,7 +3,7 @@
 
 using System.Collections;
 
-namespace Depra.Coroutines.Domain
+namespace Depra.Coroutines.Domain.Entities
 {
     public interface ICoroutineProcessor
     {
@@ -11,6 +11,6 @@ namespace Depra.Coroutines.Domain
         
         void Tick();
 
-        IEnumerator Process(IEnumerator process);
+        ICoroutine Process(IEnumerator process);
     }
 }
