@@ -1,4 +1,4 @@
-// Copyright © 2022 Nikolay Melnikov. All rights reserved.
+// Copyright © 2023 Nikolay Melnikov. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 using System;
@@ -7,40 +7,29 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using Depra.Coroutines.Domain.Entities;
 using Depra.Coroutines.Domain.Exceptions;
 
-namespace Depra.Coroutines.Application
+namespace Depra.Coroutines.Async
 {
-	public interface ICoroutinePump
-	{
-		object ReturnValue { get; }
-		
-		bool IsDone { get; }
-
-		/// <summary>
-		/// Returns true if it needs to be called again.
-		/// </summary>
-		bool Pump();
-	}
-	
-	/// <summary>
-	/// Wrapper class for <see cref="IEnumerator"/> objects.
-	/// <remarks>
-	/// This class is nice because it allows <see cref="IEnumerator"/>'s to return other <see cref="IEnumerator"/>'s just like Unity.
-	/// </remarks>
-	/// </summary>
-    public sealed class CoroutinePump
+    /// <summary>
+    /// Wrapper class for <see cref="IEnumerator"/> objects.
+    /// <remarks>
+    /// This class is nice because it allows <see cref="IEnumerator"/>'s to return other <see cref="IEnumerator"/>'s just like Unity.
+    /// </remarks>
+    /// </summary>
+    public sealed partial class AsyncRoutine : ICoroutine
     {
-	    private readonly List<IEnumerator> _finished;
-	    private readonly Stack<IEnumerator> _processStack;
+        private readonly List<IEnumerator> _finished;
+        private readonly Stack<IEnumerator> _processStack;
 
-	    private object _returnValue;
+        private object _returnValue;
 
-        public CoroutinePump(IEnumerator enumerator)
+        public AsyncRoutine(IEnumerator enumerator)
         {
-	        _finished = new List<IEnumerator>();
-	        _processStack = new Stack<IEnumerator>();
-	        _processStack.Push(enumerator);
+            _finished = new List<IEnumerator>();
+            _processStack = new Stack<IEnumerator>();
+            _processStack.Push(enumerator);
         }
 
         public object ReturnValue
@@ -53,7 +42,7 @@ namespace Depra.Coroutines.Application
         }
 
         public bool IsDone => _processStack.Any() == false;
-        
+
         /// <summary>
         /// Returns true if it needs to be called again.
         /// </summary>
@@ -85,7 +74,7 @@ namespace Depra.Coroutines.Application
                 var objectTrace = GenerateObjectTrace(_finished.Concat(_processStack));
                 if (objectTrace.Any() == false)
                 {
-                    throw;
+                    throw new UnhandledCoroutineException(exception);
                 }
 
                 throw new CoroutineException(objectTrace, exception);
@@ -111,7 +100,7 @@ namespace Depra.Coroutines.Application
 
         public void Stop()
         {
-	        _processStack.Clear();
+            _processStack.Clear();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -121,13 +110,14 @@ namespace Depra.Coroutines.Application
 
             foreach (var enumerator in enumerators)
             {
-                var field = enumerator.GetType().GetField("<>4__this",
+                var type = enumerator.GetType();
+                var field = type.GetField("<>4__this",
                     BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
 
                 if (field == null)
                 {
-                    // Mono seems to use a different name
-                    field = enumerator.GetType().GetField("<>f__this",
+                    // Mono seems to use a different name.
+                    field = type.GetField("<>f__this", 
                         BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
 
                     if (field == null)

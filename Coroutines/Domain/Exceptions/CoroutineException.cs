@@ -7,14 +7,17 @@ using System.Text;
 
 namespace Depra.Coroutines.Domain.Exceptions
 {
-    public sealed class CoroutineException : Exception
+    public class CoroutineException : Exception
     {
         private readonly List<Type> _objTrace;
 
         public IEnumerable<Type> ObjectTrace => _objTrace;
 
-        public CoroutineException(List<Type> objTrace, Exception innerException) : base(CreateMessage(objTrace),
-            innerException) => _objTrace = objTrace;
+        public CoroutineException(List<Type> objTrace, Exception innerException) :
+            base(CreateMessage(objTrace), innerException) => _objTrace = objTrace;
+
+        protected CoroutineException(string message, Exception innerException) :
+            base(message, innerException) { }
 
         private static string CreateMessage(List<Type> objTrace)
         {

@@ -12,5 +12,7 @@ namespace Depra.Coroutines.Domain.Entities
         void Tick();
 
         ICoroutine Process(IEnumerator process);
+        
+        void Stop(ICoroutine coroutine);
     }
 }

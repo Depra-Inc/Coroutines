@@ -6,10 +6,11 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Depra.Coroutines.Domain.Entities;
+using Depra.Coroutines.Domain.Exceptions;
 
-namespace Depra.Coroutines.Application
+namespace Depra.Coroutines.Async
 {
-	/// <summary>
+    /// <summary>
     /// A container for running multiple routines in parallel. Coroutines can be nested.
     /// </summary>
     public sealed class AsyncProcessor : ICoroutineProcessor
@@ -19,10 +20,10 @@ namespace Depra.Coroutines.Application
 
         public AsyncProcessor()
         {
-	        _newWorkers = new List<CoroutineInfo>();
-	        _workers = new LinkedList<CoroutineInfo>();
+            _newWorkers = new List<CoroutineInfo>();
+            _workers = new LinkedList<CoroutineInfo>();
         }
-        
+
         public bool IsRunning => _workers.Any() || _newWorkers.Any();
 
         public void Tick()
@@ -38,8 +39,15 @@ namespace Depra.Coroutines.Application
             AddNewWorkers();
         }
 
-        public ICoroutine Process(IEnumerator process) => 
-	        ProcessInternal(process);
+        public ICoroutine Process(IEnumerator process) =>
+            ProcessInternal(process);
+
+        public void Stop(ICoroutine coroutine)
+        {
+            var worker = _workers.FirstOrDefault(x => x.Routine == coroutine);
+            _workers.Remove(worker);
+            _newWorkers.Remove(worker);
+        }
 
         private void AdvanceFrameAll()
         {
@@ -52,8 +60,8 @@ namespace Depra.Coroutines.Application
 
                 try
                 {
-                    worker.Pump.Pump();
-                    worker.IsFinished = worker.Pump.IsDone;
+                    worker.Routine.Pump();
+                    worker.IsFinished = worker.Routine.IsDone;
                 }
                 catch (Exception)
                 {
@@ -70,16 +78,13 @@ namespace Depra.Coroutines.Application
             }
         }
 
-        private Coroutine ProcessInternal(IEnumerator process)
+        private ICoroutine ProcessInternal(IEnumerator process)
         {
-            var data = new CoroutineInfo()
-            {
-                Pump = new CoroutinePump(process),
-            };
-
+            var coroutine = new AsyncRoutine(process);
+            var data = new CoroutineInfo {Routine = coroutine,};
             _newWorkers.Add(data);
 
-            return new Coroutine(data.Pump, WaitUntilFinished(data));
+            return coroutine;
         }
 
         private static IEnumerator WaitUntilFinished(CoroutineInfo workerData)
@@ -102,8 +107,8 @@ namespace Depra.Coroutines.Application
 
         private class CoroutineInfo
         {
-	        public bool IsFinished;
-            public CoroutinePump Pump;
+            public bool IsFinished;
+            public AsyncRoutine Routine;
         }
     }
 }

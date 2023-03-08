@@ -1,13 +1,13 @@
 using System.Collections;
 using Depra.Coroutines.Domain.Entities;
 
-namespace Depra.Coroutines.Application
+namespace Depra.Coroutines.Async
 {
-	public sealed class AsyncCoroutineHost : ICoroutineHost
+	public sealed class AsyncRoutineHost : ICoroutineHost
 	{
 		private readonly ICoroutineProcessor _processor;
 
-		public AsyncCoroutineHost(ICoroutineProcessor processor) =>
+		public AsyncRoutineHost(ICoroutineProcessor processor) =>
 			_processor = processor;
 
 		public ICoroutine StartCoroutine(IEnumerator process) =>
