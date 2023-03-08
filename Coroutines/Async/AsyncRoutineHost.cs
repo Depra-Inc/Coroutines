@@ -14,6 +14,6 @@ namespace Depra.Coroutines.Async
 			_processor.Process(process);
 
 		public void StopCoroutine(ICoroutine coroutine) => 
-			coroutine.Stop();
+			_processor.Stop(coroutine);
 	}
 }

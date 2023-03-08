@@ -6,7 +6,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Depra.Coroutines.Domain.Entities;
-using Depra.Coroutines.Domain.Exceptions;
 
 namespace Depra.Coroutines.Async
 {
@@ -44,6 +43,7 @@ namespace Depra.Coroutines.Async
 
         public void Stop(ICoroutine coroutine)
         {
+            coroutine.Stop();
             var worker = _workers.FirstOrDefault(x => x.Routine == coroutine);
             _workers.Remove(worker);
             _newWorkers.Remove(worker);
