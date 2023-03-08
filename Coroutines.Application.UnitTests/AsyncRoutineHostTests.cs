@@ -1,21 +1,23 @@
+// Copyright © 2023 Nikolay Melnikov. All rights reserved.
+// SPDX-License-Identifier: Apache-2.0
+
 using System.Collections;
+using Depra.Coroutines.Async;
 using Depra.Coroutines.Domain.Entities;
-using FluentAssertions;
-using NSubstitute;
 
 namespace Depra.Coroutines.Application.UnitTests;
 
-[TestFixture(TestOf = typeof(AsyncCoroutineHost))]
-internal sealed class AsyncCoroutineHostTests
+[TestFixture(TestOf = typeof(AsyncRoutineHost))]
+internal sealed class AsyncRoutineHostTests
 {
-	private AsyncCoroutineHost _asyncCoroutineHost = null!;
+	private ICoroutineHost _asyncRoutineHost = null!;
 	private ICoroutineProcessor _coroutineProcessor = null!;
 
 	[SetUp]
 	public void Setup()
 	{
 		_coroutineProcessor = Substitute.For<ICoroutineProcessor>();
-		_asyncCoroutineHost = new AsyncCoroutineHost(_coroutineProcessor);
+		_asyncRoutineHost = new AsyncRoutineHost(_coroutineProcessor);
 	}
 
 	[Test]
@@ -25,7 +27,7 @@ internal sealed class AsyncCoroutineHostTests
 		var process = Substitute.For<IEnumerator>();
 		
 		// Act.
-		var coroutine = _asyncCoroutineHost.StartCoroutine(process);
+		var coroutine = _asyncRoutineHost.StartCoroutine(process);
 		
 		// Arrange.
 		coroutine.Should().NotBeNull();
@@ -39,7 +41,7 @@ internal sealed class AsyncCoroutineHostTests
 		var process = Substitute.For<IEnumerator>();
 		
 		// Act.
-		var coroutine = _asyncCoroutineHost.StartCoroutine(process);
+		var coroutine = _asyncRoutineHost.StartCoroutine(process);
 
 		// Assert.
 		coroutine.Should().NotBeNull();
@@ -53,7 +55,7 @@ internal sealed class AsyncCoroutineHostTests
 		var process = Substitute.For<IEnumerator>();
 
 		// Act.
-		_asyncCoroutineHost.StartCoroutine(process);
+		_asyncRoutineHost.StartCoroutine(process);
 
 		// Assert.
 		_coroutineProcessor.Received().Process(process);
@@ -65,7 +67,7 @@ internal sealed class AsyncCoroutineHostTests
 		// Arrange.
 		var process = Substitute.For<IEnumerator>();
 		var coroutineProcessor = new AsyncProcessor();
-		var coroutineHost = new AsyncCoroutineHost(coroutineProcessor);
+		var coroutineHost = new AsyncRoutineHost(coroutineProcessor);
 		var coroutine = coroutineHost.StartCoroutine(process);
 
 		// Act.
@@ -76,15 +78,15 @@ internal sealed class AsyncCoroutineHostTests
 	}
 
 	[Test]
-	public void WhenStopCoroutine_ThenCallsStopOnCoroutine()
+	public void WhenStopCoroutine_ThenCallsStopOnProcessor()
 	{
 		// Arrange.
 		var coroutine = Substitute.For<ICoroutine>();
 
 		// Act.
-		_asyncCoroutineHost.StopCoroutine(coroutine);
+		_asyncRoutineHost.StopCoroutine(coroutine);
 
 		// Assert.
-		coroutine.Received().Stop();
+		_coroutineProcessor.Received().Stop(coroutine);
 	}
 }

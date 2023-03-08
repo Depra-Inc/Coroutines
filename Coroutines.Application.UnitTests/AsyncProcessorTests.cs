@@ -2,143 +2,218 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Collections;
-using FluentAssertions;
-using NSubstitute;
+using Depra.Coroutines.Async;
+using Depra.Coroutines.Domain.Entities;
+using Depra.Coroutines.Domain.Exceptions;
 
 namespace Depra.Coroutines.Application.UnitTests;
 
 [TestFixture(TestOf = typeof(AsyncProcessor))]
 internal sealed class AsyncProcessorTests
 {
-    private AsyncProcessor _asyncProcessor = null!;
+    private ICoroutineProcessor _asyncProcessor = null!;
 
     [SetUp]
-    public void Setup() => 
-	    _asyncProcessor = new AsyncProcessor();
+    public void Setup() =>
+        _asyncProcessor = new AsyncProcessor();
 
     [Test]
     public void WhenCreated_ThenNotRunning()
     {
-	    // Act.
-	    var isRunning = _asyncProcessor.IsRunning;
+        // Act.
+        var isRunning = _asyncProcessor.IsRunning;
 
-	    // Assert.
-	    isRunning.Should().BeFalse();
+        // Assert.
+        isRunning.Should().BeFalse();
     }
-    
+
     [Test]
     public void WhenProcessCoroutine_ThenIsRunning()
     {
-	    // Arrange.
-	    var process = Substitute.For<IEnumerator>();
+        // Arrange.
+        var process = Substitute.For<IEnumerator>();
 
-	    // Act.
-	    _asyncProcessor.Process(process);
-	    var isRunning = _asyncProcessor.IsRunning;
+        // Act.
+        _asyncProcessor.Process(process);
+        var isRunning = _asyncProcessor.IsRunning;
 
-	    // Assert.
-	    isRunning.Should().BeTrue();
+        // Assert.
+        isRunning.Should().BeTrue();
     }
-    
+
     [Test]
     public void WhenTick_AndCoroutinesRunning_ThenAdvancesAllFrames()
     {
-	    // Arrange.
-	    var coroutine = TestCoroutine();
-	    var isProcessed = false;
+        // Arrange.
+        var process = TestCoroutine();
+        var isProcessed = false;
 
-	    IEnumerator TestCoroutine()
-	    {
-		    yield return null;
-		    isProcessed = true;
-	    }
+        IEnumerator TestCoroutine()
+        {
+            yield return null;
+            isProcessed = true;
+        }
 
-	    // Act.
-	    _asyncProcessor.Process(coroutine);
-	    _asyncProcessor.Tick();
+        // Act.
+        _asyncProcessor.Process(process);
+        _asyncProcessor.Tick();
+        _asyncProcessor.Tick();
 
-	    // Assert.
-	    isProcessed.Should().BeTrue();
+        // Assert.
+        isProcessed.Should().BeTrue();
     }
 
     [Test]
-    public void Tick_RemovesFinishedCoroutines()
+    public void WhenTick_ThenRemovesFinishedCoroutines()
     {
-	    // Arrange
-	    var processor = new AsyncProcessor();
-	    var coroutine = TestCoroutine();
-	    IEnumerator TestCoroutine()
-	    {
-		    yield return null;
-	    }
+        // Arrange.
+        var process = TestCoroutine();
 
-	    // Act
-	    processor.Process(coroutine);
-	    processor.Tick();
-	    var isRunningBefore = processor.IsRunning;
-	    processor.Tick();
-	    var isRunningAfter = processor.IsRunning;
+        IEnumerator TestCoroutine()
+        {
+            yield return null;
+        }
 
-	    // Assert
-	    Assert.IsTrue(isRunningBefore);
-	    Assert.IsFalse(isRunningAfter);
+        // Act.
+        _asyncProcessor.Process(process);
+        _asyncProcessor.Tick();
+        var isRunningBefore = _asyncProcessor.IsRunning;
+        _asyncProcessor.Tick();
+        var isRunningAfter = _asyncProcessor.IsRunning;
+
+        // Assert.
+        isRunningBefore.Should().BeTrue();
+        isRunningAfter.Should().BeFalse();
     }
 
     [Test]
-    public void WhenRunCoroutine_AndDurationIsOne_ThenCoroutineCompletedAfterOneSecond()
+    public void WhenTickMultipleRoutines_AndContainException_ThenContainsObjectStackTrace()
+    {
+        // Arrange
+        var process = TargetCoroutine();
+
+        IEnumerator NestedCoroutine()
+        {
+            yield break;
+        }
+
+        IEnumerator CoroutineWithException()
+        {
+            yield return null;
+            throw new Exception("Test exception");
+        }
+
+        IEnumerator TargetCoroutine()
+        {
+            yield return NestedCoroutine();
+            yield return CoroutineWithException();
+        }
+
+        _asyncProcessor.Process(process);
+
+        // Act.
+        var act = () =>
+        {
+            while (_asyncProcessor.IsRunning)
+            {
+                _asyncProcessor.Tick();
+            }
+        };
+
+        // Act & Assert
+        act.Should().Throw<CoroutineException>();
+    }
+
+    [Test]
+    public void WhenTick_AndCoroutineContainException_ThenExceptionIsThrown()
+    {
+        // Arrange.
+        var process = CoroutineWithException();
+
+        IEnumerator CoroutineWithException()
+        {
+            yield return null;
+            throw new Exception();
+        }
+
+        // Act.
+        _asyncProcessor.Process(process);
+        var act = () =>
+        {
+            while (_asyncProcessor.IsRunning)
+            {
+                _asyncProcessor.Tick();
+            }
+        };
+
+        // Assert.
+        act.Should().Throw<CoroutineException>();
+    }
+
+    [Test]
+    public void WhenStartCoroutine_AndDurationIsOne_ThenCoroutineCompletesAfterOneSecond()
     {
         // Arrange.
         const int DURATION = 1;
         var asyncProcessor = _asyncProcessor;
         var startTime = DateTime.Now.Second;
+        var process = RunForSecond(DURATION);
 
         // Act.
-        asyncProcessor.Process(RunForSecond(DURATION));
+        asyncProcessor.Process(process);
         RunProcessesToEnd();
 
         // Assert.
-        Assert.That(DateTime.Now.Second - startTime, Is.GreaterThanOrEqualTo(DURATION));
+        var now = DateTime.Now.Second;
+        var elapsed = now - startTime;
+        elapsed.Should().BeGreaterThanOrEqualTo(DURATION);
     }
 
     [Test]
-    public void WhenRunMultipleCoroutines_AndDurationIsOne_ThenCoroutinesCompletedAfterThreeSeconds()
+    public void WhenStartMultipleCoroutines_AndDurationIsOne_ThenCoroutinesCompletedAfterThreeSeconds()
     {
         // Arrange.
         const int DURATION = 1;
         var asyncProcessor = _asyncProcessor;
         var startTime = DateTime.Now.Second;
+        var process = RunForSecond(DURATION);
 
         // Act.
-        // They should run in parallel
-        asyncProcessor.Process(RunForSecond(DURATION));
-        asyncProcessor.Process(RunForSecond(DURATION));
-        asyncProcessor.Process(RunForSecond(DURATION));
+        // They should run in parallel.
+        asyncProcessor.Process(process);
+        asyncProcessor.Process(process);
+        asyncProcessor.Process(process);
         RunProcessesToEnd();
 
         // Assert.
-        Assert.That(DateTime.Now.Second - startTime, Is.GreaterThanOrEqualTo(DURATION));
+        var now = DateTime.Now.Second;
+        var elapsed = now - startTime;
+        elapsed.Should().BeGreaterOrEqualTo(DURATION);
     }
 
     [Test]
-    public void WhenRunTwoNestedCoroutines_AndDurationIsOne_ThenCoroutinesCompletedAsterTwoSeconds()
+    public void WhenStartTwoNestedCoroutines_AndDurationIsOne_ThenCoroutinesCompletedAsterTwoSeconds()
     {
         // Arrange.
         const int DURATION = 1;
+        const int EXPECTED_DURATION = DURATION * 2;
         var asyncProcessor = _asyncProcessor;
         var startTime = DateTime.Now.Second;
+
+        IEnumerator RunNested(float durationInSeconds)
+        {
+            yield return RunForSecond(durationInSeconds);
+            yield return RunForSecond(durationInSeconds);
+        }
 
         // Act.
         asyncProcessor.Process(RunNested(DURATION));
         RunProcessesToEnd();
 
         // Assert.
-        Assert.That(DateTime.Now.Second - startTime, Is.GreaterThanOrEqualTo(DURATION * 2));
-    }
-
-    private static IEnumerator RunNested(float durationInSeconds)
-    {
-        yield return RunForSecond(durationInSeconds);
-        yield return RunForSecond(durationInSeconds);
+        var now = DateTime.Now.Second;
+        var elapsed = now - startTime;
+        elapsed.Should().BeGreaterThanOrEqualTo(EXPECTED_DURATION);
     }
 
     private void RunProcessesToEnd()
