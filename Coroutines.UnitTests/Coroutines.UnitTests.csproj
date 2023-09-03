@@ -7,9 +7,11 @@
 
         <IsPackable>false</IsPackable>
 
-        <AssemblyName>Depra.Coroutines.Application.UnitTests</AssemblyName>
+        <AssemblyName>Depra.Coroutines.UnitTests</AssemblyName>
 
-        <RootNamespace>Depra.Coroutines.Application.UnitTests</RootNamespace>
+        <RootNamespace>Depra.Coroutines.UnitTests</RootNamespace>
+
+        <LangVersion>default</LangVersion>
     </PropertyGroup>
 
     <ItemGroup>

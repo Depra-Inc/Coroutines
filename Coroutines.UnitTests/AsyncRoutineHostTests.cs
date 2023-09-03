@@ -1,11 +1,11 @@
-// Copyright © 2023 Nikolay Melnikov. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
+// © 2023 Nikolay Melnikov <n.melnikov@depra.org>
 
 using System.Collections;
 using Depra.Coroutines.Async;
-using Depra.Coroutines.Domain.Entities;
+using Depra.Coroutines.Entities;
 
-namespace Depra.Coroutines.Application.UnitTests;
+namespace Depra.Coroutines.UnitTests;
 
 [TestFixture(TestOf = typeof(AsyncRoutineHost))]
 internal sealed class AsyncRoutineHostTests
@@ -25,10 +25,10 @@ internal sealed class AsyncRoutineHostTests
 	{
 		// Arrange.
 		var process = Substitute.For<IEnumerator>();
-		
+
 		// Act.
 		var coroutine = _asyncRoutineHost.StartCoroutine(process);
-		
+
 		// Arrange.
 		coroutine.Should().NotBeNull();
 		coroutine.IsDone.Should().BeFalse();
@@ -36,10 +36,10 @@ internal sealed class AsyncRoutineHostTests
 
 	[Test]
 	public void WhenStartACoroutine_AndGivenEnumerator_ThenReturnsACoroutine()
-	{ 
+	{
 		// Arrange.
 		var process = Substitute.For<IEnumerator>();
-		
+
 		// Act.
 		var coroutine = _asyncRoutineHost.StartCoroutine(process);
 

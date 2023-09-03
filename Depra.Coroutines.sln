@@ -6,7 +6,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{CD9741FF
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Coroutines", "Coroutines\Coroutines.csproj", "{73804E4E-A620-43D7-B75E-11759FCE1D48}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Coroutines.Application.UnitTests", "Coroutines.Application.UnitTests\Coroutines.Application.UnitTests.csproj", "{C871DC65-B040-474D-8044-211D85200E8B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Coroutines.UnitTests", "Coroutines.UnitTests\Coroutines.UnitTests.csproj", "{C871DC65-B040-474D-8044-211D85200E8B}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "benchmark", "benchmark", "{5C709FF9-B013-4A0C-9044-ABDBF96038F9}"
 EndProject

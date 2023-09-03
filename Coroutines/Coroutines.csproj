@@ -4,6 +4,8 @@
         <TargetFramework>netstandard2.1</TargetFramework>
         <AssemblyName>Depra.Coroutines</AssemblyName>
         <RootNamespace>Depra.Coroutines</RootNamespace>
+        <LangVersion>9</LangVersion>
     </PropertyGroup>
+
 
 </Project>
