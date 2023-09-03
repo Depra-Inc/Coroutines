@@ -27,8 +27,7 @@ namespace Depra.Coroutines.Async
 			{
 				if (coroutine.ReturnValue is not T)
 				{
-					throw new AssertException(
-						$"Unexpected type returned from coroutine! Expected '{typeof(T).Name}' and found '{coroutine.ReturnValue.GetType().Name}'");
+					throw new UnexpectedTypeFromCoroutine(typeof(T).Name, coroutine.ReturnValue.GetType().Name);
 				}
 			}
 

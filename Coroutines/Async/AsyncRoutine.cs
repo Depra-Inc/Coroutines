@@ -32,7 +32,7 @@ namespace Depra.Coroutines.Async
 		{
 			get
 			{
-				Assert(_processStack.Any() == false);
+				Guard.Against(_processStack.Any() == false);
 				return _returnValue;
 			}
 		}
@@ -44,8 +44,8 @@ namespace Depra.Coroutines.Async
 		/// </summary>
 		public bool Pump()
 		{
-			Assert(_processStack.Any());
-			Assert(_returnValue == null);
+			Guard.Against(_processStack.Any());
+			Guard.Against(_returnValue == null);
 
 			var topWorker = _processStack.Peek();
 
@@ -102,20 +102,17 @@ namespace Depra.Coroutines.Async
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private static List<Type> GenerateObjectTrace(IEnumerable<IEnumerator> enumerators)
 		{
+			const BindingFlags BINDING_FLAGS = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance;
 			var objTrace = new List<Type>();
 
 			foreach (var enumerator in enumerators)
 			{
 				var type = enumerator.GetType();
-				var field = type.GetField("<>4__this",
-					BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
-
+				var field = type.GetField("<>4__this", BINDING_FLAGS);
 				if (field == null)
 				{
 					// Mono seems to use a different name.
-					field = type.GetField("<>f__this",
-						BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
-
+					field = type.GetField("<>f__this", BINDING_FLAGS);
 					if (field == null)
 					{
 						continue;
@@ -137,24 +134,6 @@ namespace Depra.Coroutines.Async
 
 			objTrace.Reverse();
 			return objTrace;
-		}
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private static void Assert(bool condition)
-		{
-			if (condition == false)
-			{
-				throw new AssertException("Assert hit in Coroutine!");
-			}
-		}
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private static void Assert(bool condition, string message)
-		{
-			if (condition == false)
-			{
-				throw new AssertException("Assert hit in Coroutine! " + message);
-			}
 		}
 	}
 }

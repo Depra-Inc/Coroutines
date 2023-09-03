@@ -5,8 +5,12 @@ using System;
 
 namespace Depra.Coroutines.Exceptions
 {
-	public sealed class AssertException : Exception
+	internal sealed class AssertException : Exception
 	{
-		public AssertException(string message) : base(message) { }
+		private const string MESSAGE = "Assert hit in Coroutine!";
+
+		public AssertException() : base(MESSAGE) { }
+
+		public AssertException(string message) : base(MESSAGE + " " + message) { }
 	}
 }
